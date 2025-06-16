@@ -5,8 +5,12 @@ const QRCode = require('qrcode');
 exports.createStudent = async (req, res) => {
     try {
         const { studentId, fullName, className } = req.body;
-        // Tạo link QR code dạng: https://<host>/api/check-in/<studentId>
-        const baseUrl = `${process.env.BASE_URL}:${process.env.PORT}` || 'http://localhost:3000';
+        // Sửa logic sinh baseUrl cho phù hợp môi trường Render
+        let baseUrl = process.env.BASE_URL;
+        if (!baseUrl) {
+            baseUrl = `http://localhost:${process.env.PORT || 3000}`;
+        }
+        // KHÔNG thêm :PORT nếu đã có BASE_URL
         const qrLink = `${baseUrl}/api/check-in/${studentId}`;
         const qrCode = await QRCode.toDataURL(qrLink);
         
