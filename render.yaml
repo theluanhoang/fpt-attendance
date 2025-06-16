@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: school-attendance-system
+    env: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: PORT
+        sync: false
+      - key: BASE_URL
+        sync: false
+    autoDeploy: true
