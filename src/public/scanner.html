@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quét mã QR</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quét mã QR học sinh</h1>
+        <div id="reader"></div>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        const statusDiv = document.getElementById('status');
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Gửi thông tin học sinh đến server
+            socket.emit('check-in', { studentId: decodedText });
+            
+            // Hiển thị thông báo thành công
+            statusDiv.className = 'status success';
+            statusDiv.textContent = 'Đã quét thành công!';
+            
+            // Tạm dừng quét trong 2 giây
+            html5QrcodeScanner.pause();
+            setTimeout(() => {
+                html5QrcodeScanner.resume();
+                statusDiv.textContent = '';
+            }, 2000);
+        }
+
+        function onScanFailure(error) {
+            // Xử lý lỗi quét
+            console.warn(`Lỗi quét: ${error}`);
+        }
+
+        // Khởi tạo scanner
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            false
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+        // Xử lý sự kiện từ server
+        socket.on('student-checked-in', (student) => {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = `Đã điểm danh: ${student.fullName} - Lớp ${student.className}`;
+        });
+
+        socket.on('error', (error) => {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = error.message;
+        });
+    </script>
+</body>
+</html> 

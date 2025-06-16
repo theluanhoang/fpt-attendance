@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống điểm danh học sinh</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .class-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .class-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .student-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .student-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .student-card.present {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .student-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .student-id {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .check-in-time {
+            color: #28a745;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hệ thống điểm danh học sinh</h1>
+        <div id="classSections"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        const classSections = {};
+
+        socket.on('student-checked-in', (student) => {
+            updateStudentStatus(student);
+        });
+
+        function updateStudentStatus(student) {
+            const classSection = getOrCreateClassSection(student.className);
+            const studentCard = getOrCreateStudentCard(classSection, student);
+            
+            studentCard.classList.add('present');
+            const timeElement = document.createElement('div');
+            timeElement.className = 'check-in-time';
+            timeElement.textContent = `Đã điểm danh: ${new Date(student.checkInTime).toLocaleTimeString()}`;
+            studentCard.appendChild(timeElement);
+        }
+
+        function getOrCreateClassSection(className) {
+            if (!classSections[className]) {
+                const section = document.createElement('div');
+                section.className = 'class-section';
+                section.innerHTML = `
+                    <h2 class="class-title">Lớp ${className}</h2>
+                    <div class="student-list"></div>
+                `;
+                document.getElementById('classSections').appendChild(section);
+                classSections[className] = section.querySelector('.student-list');
+            }
+            return classSections[className];
+        }
+
+        function getOrCreateStudentCard(classSection, student) {
+            let card = classSection.querySelector(`[data-student-id="${student.studentId}"]`);
+            if (!card) {
+                card = document.createElement('div');
+                card.className = 'student-card';
+                card.setAttribute('data-student-id', student.studentId);
+                card.innerHTML = `
+                    <div class="student-name">${student.fullName}</div>
+                    <div class="student-id">Mã số: ${student.studentId}</div>
+                `;
+                classSection.appendChild(card);
+            }
+            return card;
+        }
+    </script>
+</body>
+</html> 
